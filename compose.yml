@@ -1,0 +1,36 @@
+services:
+  rag:
+    image: ghcr.io/rublon/rublon-access-gateway:latest
+    volumes:
+      - /srv/rag/volume:/var/www/rag/mac/config/volume
+      - type: volume
+        source: rag-source
+        target: /var/www/rag
+    networks:
+      - rag-network
+    restart: unless-stopped
+  nginx:
+    image: ghcr.io/rublon/rublon-access-gateway-nginx:latest
+    depends_on:
+      - rag
+    environment:
+      - SERVER_NAME=rag.example.com
+    volumes:
+      - /etc/letsencrypt/live/rag.example.com/cert.pem:/etc/ssl/certs/rag.pem
+      - /etc/letsencrypt/live/rag.example.com/privkey.pem:/etc/ssl/private/rag-key.pem
+      - type: volume
+        source: rag-source
+        target: /var/www/rag
+    ports:
+      - "80:80"
+      - "443:443"
+    networks:
+      - rag-network
+    restart: unless-stopped
+
+networks:
+  rag-network:
+
+volumes:
+  rag-source:
+    name: rag-source
